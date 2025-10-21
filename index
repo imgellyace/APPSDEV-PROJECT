@@ -1,147 +1,606 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Performance Tracker - Multi-User System</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Inter font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Link to external CSS -->
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Employee Performance Tracker - Multi-User System</title>
 
-    <!-- Notification Container -->
-    <div id="notification-container"></div>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 
-    <!-- Login Screen (Initially visible if no session) -->
-    <div id="loginScreen" class="absolute inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Welcome Back</h2>
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="mb-4">
-                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700 transition duration-150">Sign In</button>
-            </form>
-            <p class="text-center text-sm text-gray-600 mt-4">
-                Don't have an account? <a href="#" onclick="showRegisterModal(); return false;" class="text-purple-600 hover:underline font-medium">Register</a>
-            </p>
-            <p class="text-center text-sm text-gray-600 mt-2">
-                <a href="#" onclick="showForgotPasswordModal(); return false;" class="text-purple-600 hover:underline font-medium">Forgot Password?</a>
-            </p>
-        </div>
-    </div>
-    
-    <!-- Main Application Container -->
-    <div id="appContainer" class="hidden w-full max-w-5xl">
-        <header class="flex justify-between items-center bg-white p-4 rounded-t-xl shadow-lg">
-            <h1 class="text-2xl font-bold text-gray-800">Performance Dashboard</h1>
-            <div class="flex items-center space-x-4">
-                <span id="userIdDisplay" class="text-sm font-medium text-gray-500 truncate max-w-xs"></span>
-                <button onclick="showAddModal()" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition duration-150 flex items-center space-x-2">
-                    <i class="fas fa-plus"></i>
-                    <span class="hidden sm:inline">Add Employee</span>
+<link href="style.css" rel="stylesheet"/></head>
+<body class="bg-gray-50 min-h-screen">
+<!-- Notification -->
+<div class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg" id="notification">
+<div class="flex items-center space-x-2">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 20 20">
+<path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path>
+</svg> <span id="notificationText">Welcome to the system</span>
+</div>
+</div>
+<!-- Login Screen -->
+<div class="min-h-screen login-bg flex items-center justify-center p-4" id="loginScreen">
+<div class="bg-white rounded-2xl card-shadow max-w-md w-full p-8 fade-in">
+<div class="text-center mb-8">
+<div class="bg-gradient-to-r from-blue-500 to-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+<svg class="w-8 h-8 text-white" fill="currentColor" viewbox="0 0 20 20">
+<img alt="Logo" class="w-full h-full object-cover rounded-full" src="images/logo.jpg"/>
+</svg>
+</div>
+<h1 class="text-2xl font-bold text-gray-900">Performance Tracker</h1>
+<p class="text-gray-600 mt-2">Sign in to access your dashboard</p>
+</div>
+<form class="space-y-6" id="loginForm">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Select User Type</label>
+<select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="userType" required="">
+<option value="">Choose your role</option>
+<option value="admin">Administrator</option>
+<option value="employee">Employee</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="username" placeholder="Enter your username" required="" type="text"/>
+</div>
+<div class="hidden" id="fullNameField">
+<label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="fullName" placeholder="Enter your full name" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="password" placeholder="Enter your password" required="" type="password"/>
+</div>
+<div class="hidden" id="confirmPasswordField">
+<label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="confirmPassword" placeholder="Confirm your password" type="password"/>
+</div>
+<button class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105" id="authButton" type="submit">
+                    Sign In
                 </button>
-                <button onclick="handleLogout()" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition duration-150 flex items-center space-x-2">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span class="hidden sm:inline">Logout</span>
+</form>
+<div class="mt-6 text-center space-y-2">
+<button class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors block w-full" id="toggleAuthMode">
+                    Don't have an account? Create one
                 </button>
-            </div>
-        </header>
+<button class="text-gray-600 hover:text-gray-800 text-sm transition-colors" id="forgotPasswordBtn">
+                    Forgot your password?
+                </button>
+</div>
+</div>
+</div>
 
-        <div id="performanceList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-white rounded-b-xl card-shadow">
-            <!-- Performance cards will be rendered here -->
-            <div class="col-span-full text-center py-10 text-gray-500" id="loadingIndicator">
-                <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
-                <p>Loading performance data...</p>
-            </div>
-        </div>
-    </div>
+<!-- Admin Dashboard -->
+<div class="hidden" id="adminDashboard">
+<!-- Admin Header -->
+<header class="gradient-bg text-white shadow-lg">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center py-6">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 sm:w-10 sm:h-10 md:w-15 md:h-10 left-10 &lt;svg class=" fill="currentColor" h-8"="" viewbox="0 0 20 20" w-8="">
+</div>
+<div>
+<h1 class="text-2xl font-bold">Admin Dashboard</h1>
+<p class="text-blue-100 text-sm">Manage all employee performance data</p>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-3">
+<div class="relative">
+<div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-opacity-30 transition-colors" id="adminProfilePicture" onclick="openProfileModal()">
+<span id="adminInitials">A</span>
+</div>
+<button class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white text-xs transition-colors" onclick="openProfileModal()">
+<svg class="w-3 h-3" fill="currentColor" viewbox="0 0 20 20">
+<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+</svg>
+</button>
+</div>
+<div class="text-right hidden sm:block">
+<p class="text-sm text-blue-100">Administrator</p>
+<p class="font-semibold" id="adminUsername">Admin User</p>
+<div class="flex items-center space-x-1 text-xs text-blue-100">
+<div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+<span>System Active</span>
+</div>
+</div>
+</div>
+<button class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 shadow-lg" onclick="logout()">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20">
+<path d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" fill-rule="evenodd"></path>
+</svg>
+<span>Logout</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Admin Performance Overview Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Total Employees</p>
+<p class="text-3xl font-bold text-blue-600" id="adminTotalEmployees">0</p>
+<p class="text-xs text-blue-600 mt-1">Active in system</p>
+</div>
+<div class="bg-blue-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-blue-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Average Performance</p>
+<p class="text-3xl font-bold text-green-600" id="adminAvgPerformance">0%</p>
+<p class="text-xs text-green-600 mt-1">Company-wide</p>
+</div>
+<div class="bg-green-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-green-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Top Performers</p>
+<p class="text-3xl font-bold text-purple-600" id="adminTopPerformers">0</p>
+<p class="text-xs text-purple-600 mt-1">Above 90% rating</p>
+</div>
+<div class="bg-purple-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-purple-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Needs Attention</p>
+<p class="text-3xl font-bold text-red-600" id="adminNeedsAttention">0</p>
+<p class="text-xs text-red-600 mt-1">Below 70% rating</p>
+</div>
+<div class="bg-red-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-red-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</div>
+</div><!-- Admin Main Content -->
+<div class="bg-white rounded-xl card-shadow">
+<!-- Admin Toolbar -->
+<div class="p-6 border-b border-gray-200">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+<div>
+<h2 class="text-xl font-semibold text-gray-900">Employee Performance Management</h2>
+<p class="text-gray-600 text-sm">Monitor and manage all employee performance data</p>
+</div>
+<div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+<div class="relative">
+<input class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64" id="adminSearchInput" placeholder="Search employees..." type="text"/>
+<svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="currentColor" viewbox="0 0 20 20">
+<path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="adminPerformanceFilter">
+<option value="">All Performance Levels</option>
+<option value="Excellent">Excellent (90%+)</option>
+<option value="Good">Good (80-89%)</option>
+<option value="Average">Average (70-79%)</option>
+<option value="Poor">Poor (&lt;70%)</option>
+</select>
+<button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2" onclick="openPerformanceModal()">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 20 20">
+<path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" fill-rule="evenodd"></path>
+</svg>
+<span>Add Performance Review</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Admin Performance Table -->
+<div class="overflow-x-auto">
+<table class="w-full">
+<thead class="bg-gray-50">
+<tr>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance Score</th>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Goals Progress</th>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Review</th>
+<th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="bg-white divide-y divide-gray-200" id="adminPerformanceTableBody">
+<!-- Performance rows will be inserted here -->
+</tbody>
+</table>
+</div>
+<!-- Admin Empty State -->
+<div class="text-center py-12 hidden" id="adminEmptyState">
+<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<h3 class="mt-2 text-sm font-medium text-gray-900">No performance data found</h3>
+<p class="mt-1 text-sm text-gray-500">Start tracking employee performance by adding reviews.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Employee Dashboard -->
+<div class="hidden" id="employeeDashboard">
+<!-- Employee Header -->
+<header class="gradient-bg text-white shadow-lg">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center py-6">
+<div class="flex items-center space-x-3">
+<div class="bg-white bg-opacity-20 p-2">
+<svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20">
+</svg>
+</div>
+<div>
+<h1 class="text-2xl font-bold">My Performance Dashboard</h1>
+<p class="text-blue-100 text-sm">Track your personal performance and goals</p>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<!-- Notification Bell -->
+<div class="relative">
+<button class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-colors relative" onclick="toggleNotifications()">
+<svg class="w-6 h-6 text-white" fill="currentColor" viewbox="0 0 20 20">
+<path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+</svg>
+<span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden" id="notificationBadge">0</span>
+</button>
+<!-- Notification Dropdown -->
+<div class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden" id="notificationDropdown">
+<div class="p-4 border-b border-gray-200">
+<div class="flex justify-between items-center">
+<h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+<button class="text-sm text-blue-600 hover:text-blue-800" onclick="markAllAsRead()">Mark all as read</button>
+</div>
+</div> <div class="max-h-96 overflow-y-auto" id="notificationList">
+<!-- Notifications will be populated here -->
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-3">
+<div class="relative">
+<div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-opacity-30 transition-colors" id="employeeProfilePicture" onclick="openProfileModal()">
+<span id="employeeInitials">E</span>
+</div>
+<button class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white text-xs transition-colors" onclick="openProfileModal()">
+<svg class="w-3 h-3" fill="currentColor" viewbox="0 0 20 20">
+<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+</svg>
+</button>
+</div>
+<div class="text-right hidden sm:block">
+<p class="text-sm text-blue-100">Employee</p>
+<p class="font-semibold" id="employeeUsername">Employee User</p>
+<div class="flex items-center space-x-1 text-xs text-blue-100">
+<div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+<span>Performance Tracked</span>
+</div>
+</div>
+</div>
+<button class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 shadow-lg" onclick="logout()">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 20 20">
+<path d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" fill-rule="evenodd"></path>
+</svg>
+<span>Logout</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- Employee Performance Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">My Overall Score</p>
+<p class="text-3xl font-bold text-blue-600" id="employeeOverallScore">0%</p>
+<p class="text-xs text-blue-600 mt-1" id="employeePerformanceLevel">Performance Level</p>
+</div>
+<div class="bg-blue-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-blue-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Goals Progress</p>
+<p class="text-3xl font-bold text-green-600" id="employeeGoalsProgress">0/0</p>
+<p class="text-xs text-green-600 mt-1" id="employeeGoalsPercentage">0% completed</p>
+</div>
+<div class="bg-green-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-green-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl card-shadow p-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-gray-600">Last Review</p>
+<p class="text-lg font-bold text-purple-600" id="employeeLastReview">No reviews</p>
+<p class="text-xs text-purple-600 mt-1" id="employeeReviewPeriod">Review Period</p>
+</div>
+<div class="bg-purple-100 p-3 rounded-full">
+<svg class="w-6 h-6 text-purple-600" fill="currentColor" viewbox="0 0 20 20">
+<path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" fill-rule="evenodd"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Employee Performance Details -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Performance Breakdown -->
+<div class="bg-white rounded-xl card-shadow p-6">
+<h3 class="text-lg font-semibold text-gray-900 mb-6">Performance Breakdown</h3>
+<div class="space-y-6" id="employeePerformanceBreakdown">
+<!-- Performance metrics will be inserted here -->
+</div>
+</div>
+<!-- Performance History -->
+<div class="bg-white rounded-xl card-shadow p-6">
+<h3 class="text-lg font-semibold text-gray-900 mb-6">Performance History</h3>
+<div class="space-y-4" id="employeePerformanceHistory">
+<!-- Performance history will be inserted here -->
+</div>
+</div>
+</div>
+<!-- Performance Notes -->
+<div class="mt-8 bg-white rounded-xl card-shadow p-6">
+<h3 class="text-lg font-semibold text-gray-900 mb-4">Latest Performance Notes</h3>
+<div class="text-gray-700" id="employeePerformanceNotes">
+<!-- Performance notes will be inserted here -->
+</div>
+</div>
+</div>
+</div>
+<!-- Performance Review Modal (Admin Only) -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="performanceModal">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl card-shadow max-w-2xl w-full max-h-screen overflow-y-auto">
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Performance Review</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="closeModal()">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20">
+<path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<form class="space-y-6" id="performanceForm">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="employeeName" required="" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+<select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="department" required="">
+<option value="">Select Department</option>
+<option value="Engineering">Engineering</option>
+<option value="Marketing">Marketing</option>
+<option value="Sales">Sales</option>
+<option value="HR">Human Resources</option>
+<option value="Finance">Finance</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Quality Score (1-100)</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="qualityScore" max="100" min="1" required="" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Productivity Score (1-100)</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="productivityScore" max="100" min="1" required="" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Teamwork Score (1-100)</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="teamworkScore" max="100" min="1" required="" type="number"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Goals Completed</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="goalsCompleted" min="0" required="" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Total Goals</label>
+<input class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="totalGoals" min="1" required="" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Performance Notes</label>
+<textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="performanceNotes" placeholder="Add notes about performance, achievements, areas for improvement..." rows="4"></textarea>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Review Period</label>
+<select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="reviewPeriod" required="">
+<option value="">Select Period</option>
+<option value="Weekly">Weekly Review</option>
+<option value="Monthly">Monthly Review</option>
+<option value="Quarterly">Quarterly Review</option>
+<option value="Annual">Annual Review</option>
+</select>
+</div>
+<div class="flex space-x-3 pt-4">
+<button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors" type="submit">
+<span id="submitButtonText">Save Performance Review</span>
+</button>
+<button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors" onclick="closeModal()" type="button">
+                                Cancel
+                            </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<!-- Password Reset Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="passwordResetModal">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl card-shadow max-w-md w-full">
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-semibold text-gray-900">Reset Password</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="closePasswordResetModal()">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20">
+<path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<div class="space-y-4" id="resetStep1">
+<p class="text-gray-600 text-sm mb-4">Enter your username to reset your password. You'll need to verify your identity.</p>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="resetUsername" placeholder="Enter your username" required="" type="text"/>
+</div>
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors" onclick="initiatePasswordReset()">
+                            Continue
+                        </button>
+</div>
+<div class="space-y-4 hidden" id="resetStep2">
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+<div class="flex items-center">
+<svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewbox="0 0 20 20">
+<path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" fill-rule="evenodd"></path>
+</svg>
+<div>
+<p class="text-sm font-medium text-blue-800">Account Found</p>
+<p class="text-xs text-blue-600" id="foundAccountInfo">User: username</p>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="newPassword" placeholder="Enter new password" required="" type="password"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="confirmNewPassword" placeholder="Confirm new password" required="" type="password"/>
+</div>
+<div class="flex space-x-3">
+<button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors" onclick="resetPassword()">
+                                Reset Password
+                            </button>
+<button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors" onclick="backToStep1()">
+                                Back
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Profile Picture Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="profileModal">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl card-shadow max-w-md w-full">
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-semibold text-gray-900">Update Profile Picture</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="closeProfileModal()">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20">
+<path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<div class="text-center mb-6">
+<div class="w-32 h-32 mx-auto bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-2xl font-semibold mb-4" id="profilePreview">
+<span id="profilePreviewInitials">?</span>
+</div>
+<p class="text-sm text-gray-600">Upload a new profile picture or remove the current one</p>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-2">Choose Image</label>
+<input accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="profileImageInput" type="file"/>
+<p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, GIF (Max 2MB)</p>
+</div>
+<div class="flex space-x-3">
+<button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors" onclick="uploadProfilePicture()">
+                                Update Picture
+                            </button>
+<button class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors" onclick="removeProfilePicture()">
+                                Remove Picture
+                            </button>
+</div>
+<button class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors" onclick="closeProfileModal()">
+                            Cancel
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Performance Details Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="detailsModal">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl card-shadow max-w-4xl w-full max-h-screen overflow-y-auto">
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-semibold text-gray-900">Performance Details</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="closeDetailsModal()">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20">
+<path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<div id="detailsContent">
+<!-- Details will be populated here -->
+</div>
+</div>
+</div>
+</div>
+</div>
 
-    <!-- Modals (Add/Edit Employee) -->
-    <div id="employeeModal" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
-        <div class="modal-content bg-white p-6 rounded-xl shadow-3xl transform scale-95 transition-transform duration-300">
-            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-4">Add Employee</h3>
-            <form id="employeeForm" onsubmit="saveEmployee(event)">
-                <input type="hidden" id="employeeId">
-                <div class="mb-4">
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                    <input type="text" id="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role/Title</label>
-                    <input type="text" id="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="score" class="block text-sm font-medium text-gray-700 mb-1">Performance Score (0-100)</label>
-                    <input type="number" id="score" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="feedback" class="block text-sm font-medium text-gray-700 mb-1">Manager Feedback</label>
-                    <textarea id="feedback" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required></textarea>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideModal('employeeModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-150">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Register Modal -->
-    <div id="registerModal" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
-        <div class="modal-content bg-white p-6 rounded-xl shadow-3xl transform scale-95 transition-transform duration-300">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">Register New Account</h3>
-            <form id="registerForm" onsubmit="handleRegister(event)">
-                <div class="mb-4">
-                    <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="registerEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="registerPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="registerConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                    <input type="password" id="registerConfirmPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideModal('registerModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-150">Register</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
-        <div class="modal-content bg-white p-6 rounded-xl shadow-3xl transform scale-95 transition-transform duration-300">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">Forgot Password</h3>
-            <p class="text-gray-600 mb-4">Enter your email address to receive a link to reset your password.</p>
-            <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
-                <div class="mb-6">
-                    <label for="forgotEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="forgotEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="hideModal('forgotPasswordModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-150">Send Reset Link</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-    <!-- Link to external JavaScript -->
-    <script src="script.js" defer type="module"></script>
-</body>
+<script src="script.js"></script></body>
 </html>
+
+
+
+
+
+
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .performance-excellent { background: linear-gradient(135deg, #10b981, #059669); }
+        .performance-good { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .performance-average { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .performance-poor { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        .notification { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+            transform: translateX(400px); 
+            transition: transform 0.3s ease;
+        }
+        .notification.show { transform: translateX(0); }
+        .chart-container { height: 200px; }
+        .login-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
