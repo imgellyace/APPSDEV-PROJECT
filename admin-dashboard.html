@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Navbar -->
+  <div class="bg-blue-700 text-white p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+    <div>
+      <span id="adminName" class="mr-4"></span>
+      <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white p-4 rounded shadow text-center">
+      <h2 class="text-gray-500">Total Employees</h2>
+      <p id="totalEmployees" class="text-3xl font-bold">4</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <h2 class="text-gray-500">Average Performance</h2>
+      <p class="text-3xl font-bold text-green-600">78%</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <h2 class="text-gray-500">Top Performers</h2>
+      <p class="text-3xl font-bold">0</p>
+    </div>
+    <div class="bg-white p-4 rounded shadow text-center">
+      <h2 class="text-gray-500">Needs Attention</h2>
+      <p class="text-3xl font-bold text-red-600">0</p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Employee Performance Management</h2>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add Performance Review</button>
+    </div>
+    <div class="bg-white shadow rounded overflow-hidden">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-200 text-gray-700">
+          <tr>
+            <th class="p-3">Employee</th>
+            <th class="p-3">Performance Score</th>
+            <th class="p-3">Goals Progress</th>
+            <th class="p-3">Productivity</th>
+            <th class="p-3">Last Review</th>
+            <th class="p-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="employeeTableBody">
+          <tr class="border-b">
+            <td class="p-3">Cliff Vincent Valencia</td>
+            <td class="p-3">75% <span class="text-gray-500 text-sm">Average</span></td>
+            <td class="p-3">0/5</td>
+            <td class="p-3">75%</td>
+            <td class="p-3">Oct 3, 2025</td>
+            <td class="p-3 text-center">
+              <button class="text-blue-600 hover:underline">View</button>
+              <button class="text-green-600 hover:underline ml-2">Edit</button>
+              <button class="text-red-600 hover:underline ml-2">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Display admin name
+    const adminName = localStorage.getItem("username") || "Administrator";
+    document.getElementById("adminName").innerText = `${adminName} (Admin)`;
+
+    // Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "index.html";
+    });
+
+    // Protect route
+    if (localStorage.getItem("role")?.toLowerCase() !== "admin") {
+      alert("Access denied. Admins only.");
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>

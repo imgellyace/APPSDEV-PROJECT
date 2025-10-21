@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Performance Tracker - Multi-User System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .performance-excellent { background: linear-gradient(135deg, #10b981, #059669); }
+        .performance-good { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .performance-average { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .performance-poor { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        .notification { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+            transform: translateX(400px); 
+            transition: transform 0.3s ease;
+        }
+        .notification.show { transform: translateX(0); }
+        .chart-container { height: 200px; }
+        .login-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Notification -->
+    <div id="notification" class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+            </svg> <span id="notificationText">Welcome to the system</span>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen login-bg flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl card-shadow max-w-md w-full p-8 fade-in">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                       <img src="images/logo.jpg" alt="Logo" class="w-full h-full object-cover rounded-full">
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Performance Tracker</h1>
+                <p class="text-gray-600 mt-2">Sign in to access your dashboard</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select User Type</label>
+                    <select id="userType" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Choose your role</option>
+                        <option value="admin">Administrator</option>
+                        <option value="employee">Employee</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your username">
+                </div>
+
+                <div id="fullNameField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="fullName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your full name">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your password">
+                </div>
+
+                <div id="confirmPasswordField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Confirm your password">
+                </div>
+
+                <button type="submit" id="authButton" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-6 text-center space-y-2">
+                <button id="toggleAuthMode" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors block w-full">
+                    Don't have an account? Create one
+                </button>
+                <button id="forgotPasswordBtn" class="text-gray-600 hover:text-gray-800 text-sm transition-colors">
+                    Forgot your password?
+                </button>
+            </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div><!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden">
+        <!-- Admin Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center space-x-3">
+<div class="w-10 h-10 sm:w-10 sm:h-10 md:w-15 md:h-10 left-10
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"></svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+                            <p class="text-blue-100 text-sm">Manage all employee performance data</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <div id="adminProfilePicture" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-opacity-30 transition-colors" onclick="openProfileModal()">
+                                    <span id="adminInitials">A</span>
+                                </div>
+                                <button onclick="openProfileModal()" class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white text-xs transition-colors">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm text-blue-100">Administrator</p>
+                                <p class="font-semibold" id="adminUsername">Admin User</p>
+                                <div class="flex items-center space-x-1 text-xs text-blue-100">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span>System Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 shadow-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"/>
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Admin Performance Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Employees</p>
+                            <p class="text-3xl font-bold text-blue-600" id="adminTotalEmployees">0</p>
+                            <p class="text-xs text-blue-600 mt-1">Active in system</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Average Performance</p>
+                            <p class="text-3xl font-bold text-green-600" id="adminAvgPerformance">0%</p>
+                            <p class="text-xs text-green-600 mt-1">Company-wide</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Top Performers</p>
+                            <p class="text-3xl font-bold text-purple-600" id="adminTopPerformers">0</p>
+                            <p class="text-xs text-purple-600 mt-1">Above 90% rating</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Needs Attention</p>
+                            <p class="text-3xl font-bold text-red-600" id="adminNeedsAttention">0</p>
+                            <p class="text-xs text-red-600 mt-1">Below 70% rating</p>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- Admin Main Content -->
+            <div class="bg-white rounded-xl card-shadow">
+                <!-- Admin Toolbar -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">Employee Performance Management</h2>
+                            <p class="text-gray-600 text-sm">Monitor and manage all employee performance data</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                            <div class="relative">
+                                <input type="text" id="adminSearchInput" placeholder="Search employees..." 
+                                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64">
+                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/>
+                                </svg>
+                            </div>
+                            <select id="adminPerformanceFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">All Performance Levels</option>
+                                <option value="Excellent">Excellent (90%+)</option>
+                                <option value="Good">Good (80-89%)</option>
+                                <option value="Average">Average (70-79%)</option>
+                                <option value="Poor">Poor (<70%)</option>
+                            </select>
+                            <button onclick="openPerformanceModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                                </svg>
+                                <span>Add Performance Review</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Performance Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance Score</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Goals Progress</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productivity</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Review</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPerformanceTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Performance rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Admin Empty State -->
+                <div id="adminEmptyState" class="text-center py-12 hidden">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No performance data found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Start tracking employee performance by adding reviews.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Dashboard -->
+    <div id="employeeDashboard" class="hidden">
+        <!-- Employee Header -->
+        <header class="gradient-bg text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-2">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">My Performance Dashboard</h1>
+                            <p class="text-blue-100 text-sm">Track your personal performance and goals</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Notification Bell -->
+                        <div class="relative">
+                            <button onclick="toggleNotifications()" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-colors relative">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                                </svg>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                            </button>
+                            
+                            <!-- Notification Dropdown -->
+                            <div id="notificationDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden">
+                                <div class="p-4 border-b border-gray-200">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                                        <button onclick="markAllAsRead()" class="text-sm text-blue-600 hover:text-blue-800">Mark all as read</button>
+                                    </div>
+                                </div>                                <div id="notificationList" class="max-h-96 overflow-y-auto">
+                                    <!-- Notifications will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <div id="employeeProfilePicture" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-opacity-30 transition-colors" onclick="openProfileModal()">
+                                    <span id="employeeInitials">E</span>
+                                </div>
+                                <button onclick="openProfileModal()" class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white text-xs transition-colors">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm text-blue-100">Employee</p>
+                                <p class="font-semibold" id="employeeUsername">Employee User</p>
+                                <div class="flex items-center space-x-1 text-xs text-blue-100">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span>Performance Tracked</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 shadow-lg">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"/>
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Employee Performance Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">My Overall Score</p>
+                            <p class="text-3xl font-bold text-blue-600" id="employeeOverallScore">0%</p>
+                            <p class="text-xs text-blue-600 mt-1" id="employeePerformanceLevel">Performance Level</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Goals Progress</p>
+                            <p class="text-3xl font-bold text-green-600" id="employeeGoalsProgress">0/0</p>
+                            <p class="text-xs text-green-600 mt-1" id="employeeGoalsPercentage">0% completed</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Last Review</p>
+                            <p class="text-lg font-bold text-purple-600" id="employeeLastReview">No reviews</p>
+                            <p class="text-xs text-purple-600 mt-1" id="employeeReviewPeriod">Review Period</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-full">
+                            <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Performance Details -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Performance Breakdown -->
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Performance Breakdown</h3>
+                    <div class="space-y-6" id="employeePerformanceBreakdown">
+                        <!-- Performance metrics will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Performance History -->
+                <div class="bg-white rounded-xl card-shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Performance History</h3>
+                    <div class="space-y-4" id="employeePerformanceHistory">
+                        <!-- Performance history will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Notes -->
+            <div class="mt-8 bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Latest Performance Notes</h3>
+                <div id="employeePerformanceNotes" class="text-gray-700">
+                    <!-- Performance notes will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Review Modal (Admin Only) -->
+    <div id="performanceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl card-shadow max-w-2xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Performance Review</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="performanceForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+                                <input type="text" id="employeeName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                <select id="department" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Select Department</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="HR">Human Resources</option>
+                                    <option value="Finance">Finance</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Quality Score (1-100)</label>
+                                <input type="number" id="qualityScore" min="1" max="100" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Productivity Score (1-100)</label>
+                                <input type="number" id="productivityScore" min="1" max="100" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Teamwork Score (1-100)</label>
+                                <input type="number" id="teamworkScore" min="1" max="100" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Goals Completed</label>
+                                <input type="number" id="goalsCompleted" min="0" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Total Goals</label>
+                                <input type="number" id="totalGoals" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Performance Notes</label>
+                            <textarea id="performanceNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Add notes about performance, achievements, areas for improvement..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Review Period</label>
+                            <select id="reviewPeriod" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Select Period</option>
+                                <option value="Weekly">Weekly Review</option>
+                                <option value="Monthly">Monthly Review</option>
+                                <option value="Quarterly">Quarterly Review</option>
+                                <option value="Annual">Annual Review</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-4">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                <span id="submitButtonText">Save Performance Review</span>
+                            </button>
+                            <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Modal -->
+    <div id="passwordResetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl card-shadow max-w-md w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Reset Password</h3>
+                        <button onclick="closePasswordResetModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div id="resetStep1" class="space-y-4">
+                        <p class="text-gray-600 text-sm mb-4">Enter your username to reset your password. You'll need to verify your identity.</p>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                            <input type="text" id="resetUsername" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your username">
+                        </div>
+                        
+                        <button onclick="initiatePasswordReset()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                            Continue
+                        </button>
+                    </div>
+                    
+                    <div id="resetStep2" class="space-y-4 hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-blue-800">Account Found</p>
+                                    <p class="text-xs text-blue-600" id="foundAccountInfo">User: username</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                            <input type="password" id="newPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter new password">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Confirm new password">
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button onclick="resetPassword()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                                Reset Password
+                            </button>
+                            <button onclick="backToStep1()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors">
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Picture Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl card-shadow max-w-md w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Update Profile Picture</h3>
+                        <button onclick="closeProfileModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <div id="profilePreview" class="w-32 h-32 mx-auto bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-2xl font-semibold mb-4">
+                            <span id="profilePreviewInitials">?</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Upload a new profile picture or remove the current one</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Choose Image</label>
+                            <input type="file" id="profileImageInput" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, GIF (Max 2MB)</p>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button onclick="uploadProfilePicture()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                Update Picture
+                            </button>
+                            <button onclick="removeProfilePicture()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                Remove Picture
+                            </button>
+                        </div>
+                        
+                        <button onclick="closeProfileModal()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl card-shadow max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Performance Details</h3>
+                        <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="detailsContent">
+                        <!-- Details will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let performanceData = [];
+        let editingId = null;
+        let currentUser = null;
+        let userRole = null;
+
+        // User Database using localStorage
+       async function login(username, password, role) {
+    try {
+        const response = await fetch("http://localhost:5065/api/Auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, role })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // ✅ Save user info to localStorage
+            localStorage.setItem("username", data.name || username);
+            localStorage.setItem("role", data.role || role);
+
+            // ✅ Redirect based on role
+            if (data.role?.toLowerCase() === "admin") {
+                window.location.href = "admin-dashboard.html";
+            } else if (data.role?.toLowerCase() === "employee") {
+                window.location.href = "employee-dashboard.html";
+            } else {
+                alert("Unknown user role. Please contact admin.");
+            }
+
+            return true;
+        } else {
+            showNotification(data.message || "Invalid credentials.", "error");
+            return false;
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        showNotification("Cannot connect to server.", "error");
+        return false;
+    }
+}
+
+
+        // Notification Database using localStorage
+        class NotificationDB {
+            constructor() {
+                this.dbName = 'employeeNotifications';
+            }
+
+            init() {
+                const stored = localStorage.getItem(this.dbName);
+                if (!stored) {
+                    const defaultData = {
+                        notifications: [],
+                        nextId: 1
+                    };
+                    this.save(defaultData);
+                }
+                return this.load();
+            }
+
+            load() {
+                try {
+                    const data = JSON.parse(localStorage.getItem(this.dbName));
+                    return data || { notifications: [], nextId: 1 };
+                } catch (error) {
+                    return { notifications: [], nextId: 1 };
+                }
+            }
+
+            save(data) {
+                try {
+                    localStorage.setItem(this.dbName, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            addNotification(employeeName, title, message, type = 'info') {
+                const data = this.load();
+                const notification = {
+                    id: data.nextId,
+                    employeeName: employeeName,
+                    title: title,
+                    message: message,
+                    type: type,
+                    read: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                data.notifications.push(notification);
+                data.nextId++;
+                
+                if (this.save(data)) {
+                    return notification;
+                }
+                return null;
+            }
+
+            getNotificationsForEmployee(employeeName) {
+                const data = this.load();
+                return data.notifications.filter(n => n.employeeName === employeeName);
+            }
+
+            getUnreadCount(employeeName) {
+                const notifications = this.getNotificationsForEmployee(employeeName);
+                return notifications.filter(n => !n.read).length;
+            }
+
+            markAsRead(notificationId) {
+                const data = this.load();
+                const notification = data.notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.read = true;
+                    return this.save(data);
+                }
+                return false;
+            }
+        }
+
+        const notificationDB = new NotificationDB();
+
+        // Performance Database using localStorage
+        class PerformanceDB {
+            constructor() {
+                this.dbName = 'employeePerformanceTracker';
+            }
+
+            init() {
+                const stored = localStorage.getItem(this.dbName);
+                if (!stored) {
+                    const sampleData = {
+                        performances: [],
+                        nextId: 1
+                    };
+                    this.save(sampleData);
+                }
+                return this.load();
+            }
+
+            load() {
+                try {
+                    const data = JSON.parse(localStorage.getItem(this.dbName));
+                    return data || { performances: [], nextId: 1 };
+                } catch (error) {
+                    return { performances: [], nextId: 1 };
+                }
+            }
+
+            save(data) {
+                try {
+                    localStorage.setItem(this.dbName, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            select() {
+                return this.load().performances;
+            }
+
+            insert(performance) {
+                const data = this.load();
+                const newPerformance = {
+                    ...performance,
+                    id: data.nextId,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                data.performances.push(newPerformance);
+                data.nextId++;
+                
+                if (this.save(data)) {
+                    return newPerformance;
+                }
+                return null;
+            }
+
+            update(id, updates) {
+                const data = this.load();
+                const index = data.performances.findIndex(perf => perf.id === id);
+                
+                if (index !== -1) {
+                    data.performances[index] = {
+                        ...data.performances[index],
+                        ...updates,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    if (this.save(data)) {
+                        return data.performances[index];
+                    }
+                }
+                return null;
+            }
+
+            delete(id) {
+                const data = this.load();
+                const initialLength = data.performances.length;
+                data.performances = data.performances.filter(perf => perf.id !== id);
+                
+                if (data.performances.length < initialLength) {
+                    return this.save(data);
+                }
+                return false;
+            }
+        }
+
+        const db = new PerformanceDB();
+
+        // Authentication functions
+        let isCreateMode = false;
+
+        function login(username, password, role) {
+            const user = userDB.getUser(username);
+            if (user && user.password === password && user.role === role) {
+                currentUser = username;
+                userRole = role;
+                
+                // Store session
+                sessionStorage.setItem('currentUser', username);
+                sessionStorage.setItem('userRole', role);
+                
+                showDashboard(role);
+                showNotification(`Welcome ${user.name}!`, 'success');
+                return true;
+            }
+            return false;
+        }
+
+        function createAccount(username, password, confirmPassword, role, fullName) {
+            // Validation
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return false;
+            }
+
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters long', 'error');
+                return false;
+            }
+
+            if (!fullName.trim()) {
+                showNotification('Full name is required', 'error');
+                return false;
+            }
+
+            // Create user
+            const result = userDB.createUser(username, password, role, fullName.trim());
+            
+            if (result.success) {
+                // If creating an employee account, automatically add them to performance tracking
+                if (role === 'employee') {
+                    createInitialPerformanceRecord(fullName.trim());
+                }
+                
+                showNotification(result.message, 'success');
+                toggleAuthMode(); // Switch back to login mode
+                return true;
+            } else {
+                showNotification(result.message, 'error');
+                return false;
+            }
+        }
+
+        function toggleAuthMode() {
+            isCreateMode = !isCreateMode;
+            
+            const fullNameField = document.getElementById('fullNameField');
+            const confirmPasswordField = document.getElementById('confirmPasswordField');
+            const authButton = document.getElementById('authButton');
+            const toggleButton = document.getElementById('toggleAuthMode');
+            const fullNameInput = document.getElementById('fullName');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            
+            if (isCreateMode) {
+                fullNameField.classList.remove('hidden');
+                confirmPasswordField.classList.remove('hidden');
+                authButton.textContent = 'Create Account';
+                toggleButton.textContent = 'Already have an account? Sign in';
+                fullNameInput.required = true;
+                confirmPasswordInput.required = true;
+            } else {
+                fullNameField.classList.add('hidden');
+                confirmPasswordField.classList.add('hidden');
+                authButton.textContent = 'Sign In';
+                toggleButton.textContent = "Don't have an account? Create one";
+                fullNameInput.required = false;
+                confirmPasswordInput.required = false;
+                
+                // Clear the additional fields
+                fullNameInput.value = '';
+                confirmPasswordInput.value = '';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            userRole = null;
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('userRole');
+            
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('employeeDashboard').classList.add('hidden');
+            
+            // Reset form
+            document.getElementById('loginForm').reset();
+            showNotification('Logged out successfully', 'success');
+        }
+
+        function checkSession() {
+            const storedUser = sessionStorage.getItem('currentUser');
+            const storedRole = sessionStorage.getItem('userRole');
+            
+            if (storedUser && storedRole && userDB.getUser(storedUser)) {
+                currentUser = storedUser;
+                userRole = storedRole;
+                showDashboard(storedRole);
+                return true;
+            }
+            return false;
+        }
+
+        function showDashboard(role) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            
+            const user = userDB.getUser(currentUser);
+            if (role === 'admin') {
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                document.getElementById('employeeDashboard').classList.add('hidden');
+                document.getElementById('adminUsername').textContent = user.name;
+                updateProfilePicture('admin', user);
+                initializeAdminDashboard();
+            } else {
+                document.getElementById('employeeDashboard').classList.remove('hidden');
+                document.getElementById('adminDashboard').classList.add('hidden');
+                document.getElementById('employeeUsername').textContent = user.name;
+                updateProfilePicture('employee', user);
+                initializeEmployeeDashboard();
+            }
+        }
+
+        function updateProfilePicture(role, user) {
+            const profilePictureElement = document.getElementById(role + 'ProfilePicture');
+            const initialsElement = document.getElementById(role + 'Initials');
+            
+            if (user.profilePicture) {
+                profilePictureElement.style.backgroundImage = `url(${user.profilePicture})`;
+                profilePictureElement.style.backgroundSize = 'cover';
+                profilePictureElement.style.backgroundPosition = 'center';
+                initialsElement.style.display = 'none';
+            } else {
+                profilePictureElement.style.backgroundImage = 'none';
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                initialsElement.textContent = initials;
+                initialsElement.style.display = 'block';
+            }
+        }
+
+        // Profile Picture Modal Functions
+        function openProfileModal() {
+            const user = userDB.getUser(currentUser);
+            const modal = document.getElementById('profileModal');
+            const preview = document.getElementById('profilePreview');
+            const previewInitials = document.getElementById('profilePreviewInitials');
+            
+            // Update preview
+            if (user.profilePicture) {
+                preview.style.backgroundImage = `url(${user.profilePicture})`;
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                previewInitials.style.display = 'none';
+            } else {
+                preview.style.backgroundImage = 'none';
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                previewInitials.textContent = initials;
+                previewInitials.style.display = 'block';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('profileImageInput').value = '';
+        }
+
+        function uploadProfilePicture() {
+            const fileInput = document.getElementById('profileImageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('Please select an image file', 'error');
+                return;
+            }
+            
+            // Check file size (2MB limit)
+            if (file.size > 2 * 1024 * 1024) {
+                showNotification('Image size must be less than 2MB', 'error');
+                return;
+            }
+            
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please select a valid image file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                
+                // Update user profile picture in database
+                if (userDB.updateProfilePicture(currentUser, imageData)) {
+                    // Update UI
+                    const user = userDB.getUser(currentUser);
+                    updateProfilePicture(userRole, user);
+                    
+                    // Update preview
+                    const preview = document.getElementById('profilePreview');
+                    const previewInitials = document.getElementById('profilePreviewInitials');
+                    preview.style.backgroundImage = `url(${imageData})`;
+                    preview.style.backgroundSize = 'cover';
+                    preview.style.backgroundPosition = 'center';
+                    previewInitials.style.display = 'none';
+                    
+                    showNotification('Profile picture updated successfully!', 'success');
+                } else {
+                    showNotification('Failed to update profile picture', 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showNotification('Error reading image file', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function removeProfilePicture() {
+            if (confirm('Are you sure you want to remove your profile picture?')) {
+                if (userDB.updateProfilePicture(currentUser, null)) {
+                    // Update UI
+                    const user = userDB.getUser(currentUser);
+                    updateProfilePicture(userRole, user);
+                    
+                    // Update preview
+                    const preview = document.getElementById('profilePreview');
+                    const previewInitials = document.getElementById('profilePreviewInitials');
+                    preview.style.backgroundImage = 'none';
+                    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    previewInitials.textContent = initials;
+                    previewInitials.style.display = 'block';
+                    
+                    showNotification('Profile picture removed successfully!', 'success');
+                } else {
+                    showNotification('Failed to remove profile picture', 'error');
+                }
+            }
+        }
+
+        // File input change handler for live preview
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('profileImageInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const preview = document.getElementById('profilePreview');
+                            const previewInitials = document.getElementById('profilePreviewInitials');
+                            preview.style.backgroundImage = `url(${event.target.result})`;
+                            preview.style.backgroundSize = 'cover';
+                            preview.style.backgroundPosition = 'center';
+                            previewInitials.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const userType = document.getElementById('userType').value;
+
+    if (isCreateMode) {
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const fullName = document.getElementById('fullName').value;
+        
+        createAccount(username, password, confirmPassword, userType, fullName);
+    } else {
+        try {
+            const response = await fetch("http://localhost:5065/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    role: userType
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showNotification(`Welcome back, ${result.name || username}!`, 'success');
+                // Redirect or show dashboard here
+                console.log("✅ Login success:", result);
+            } else {
+                showNotification(result.message || 'Invalid credentials. Please check your username, password, and role.', 'error');
+                console.warn("❌ Login failed:", result);
+            }
+        } catch (error) {
+            console.error("⚠️ Login request failed:", error);
+            showNotification("Failed to connect to server. Please make sure backend is running.", "error");
+        }
+    }
+});
+
+
+        // Toggle auth mode handler
+        document.getElementById('toggleAuthMode').addEventListener('click', toggleAuthMode);
+
+        // Forgot password handler
+        document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
+            document.getElementById('passwordResetModal').classList.remove('hidden');
+        });
+
+        // Create initial performance record for new employees
+        function createInitialPerformanceRecord(employeeName) {
+            const initialPerformance = {
+                employeeName: employeeName,
+                department: 'General', // Default department
+                qualityScore: 75, // Default starting scores
+                productivityScore: 75,
+                teamworkScore: 75,
+                goalsCompleted: 0,
+                totalGoals: 5, // Default goal count
+                performanceNotes: 'New employee - initial performance record created automatically. Awaiting first formal review.',
+                reviewPeriod: 'Initial Setup'
+            };
+            
+            const newRecord = db.insert(initialPerformance);
+            if (newRecord) {
+                performanceData = db.select(); // Refresh data
+                console.log(`Initial performance record created for ${employeeName}`);
+            }
+        }
+
+        // Initialize data and dashboards
+        function initializeData() {
+            userDB.init();
+            users = userDB.getAllUsers();
+            notificationDB.init();
+            db.init();
+            performanceData = db.select();
+        }
+
+        function initializeAdminDashboard() {
+            // Refresh performance data to include any new employees
+            performanceData = db.select();
+            
+            renderAdminPerformanceTable();
+            updateAdminDashboardStats();
+            
+            // Setup admin event listeners
+            document.getElementById('adminSearchInput').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterAndRenderAdminTable(searchTerm);
+            });
+
+            document.getElementById('adminPerformanceFilter').addEventListener('change', function(e) {
+                const filterLevel = e.target.value;
+                const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
+                filterAndRenderAdminTable(searchTerm, filterLevel);
+            });
+        }
+
+        function initializeEmployeeDashboard() {
+            renderEmployeeDashboard();
+            loadEmployeeNotifications();
+        }
+
+        // Notification functions
+        function loadEmployeeNotifications() {
+            if (userRole !== 'employee') return;
+            
+            const user = userDB.getUser(currentUser);
+            if (!user) return;
+            
+            const notifications = notificationDB.getNotificationsForEmployee(user.name);
+            const unreadCount = notificationDB.getUnreadCount(user.name);
+            
+            updateNotificationBadge(unreadCount);
+            renderNotificationList(notifications);
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderNotificationList(notifications) {
+            const notificationList = document.getElementById('notificationList');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div class="p-6 text-center text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                        </svg>
+                        <p class="text-sm">No notifications yet</p>
+                        <p class="text-xs text-gray-400 mt-1">You'll see updates about your performance here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort notifications by date (newest first)
+            notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            notificationList.innerHTML = notifications.map(notification => {
+                const typeColors = {
+                    success: 'bg-green-50 border-green-200 text-green-800',
+                    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                    info: 'bg-blue-50 border-blue-200 text-blue-800',
+                    error: 'bg-red-50 border-red-200 text-red-800'
+                };
+                
+                const typeIcons = {
+                    success: '✅',
+                    warning: '⚠️',
+                    info: 'ℹ️',
+                    error: '❌'
+                };
+                
+                return `
+                    <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${notification.read ? 'opacity-60' : ''}" 
+                         onclick="markNotificationAsRead(${notification.id})">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full ${typeColors[notification.type]} flex items-center justify-center text-sm">
+                                ${typeIcons[notification.type]}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                        ${notification.title}
+                                    </p>
+                                    ${!notification.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full"></div>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    ${notification.message}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-2">
+                                    ${formatDate(notification.createdAt)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            const isHidden = dropdown.classList.contains('hidden');
+            
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                // Refresh notifications when opening
+                loadEmployeeNotifications();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        function markNotificationAsRead(notificationId) {
+            notificationDB.markAsRead(notificationId);
+            loadEmployeeNotifications(); // Refresh the notification list
+        }
+
+        function markAllAsRead() {
+            if (userRole !== 'employee') return;
+            
+            const user = userDB.getUser(currentUser);
+            if (!user) return;
+            
+            const notifications = notificationDB.getNotificationsForEmployee(user.name);
+            notifications.forEach(notification => {
+                if (!notification.read) {
+                    notificationDB.markAsRead(notification.id);
+                }
+            });
+            
+            loadEmployeeNotifications();
+            showNotification('All notifications marked as read', 'success');
+        }
+
+        // Close notification dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = event.target.closest('[onclick="toggleNotifications()"]');
+            
+            if (!button && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Performance calculation functions
+        function calculateOverallScore(quality, productivity, teamwork) {
+            return Math.round((quality + productivity + teamwork) / 3);
+        }
+
+        function getPerformanceLevel(score) {
+            if (score >= 90) return 'Excellent';
+            if (score >= 80) return 'Good';
+            if (score >= 70) return 'Average';
+            return 'Poor';
+        }
+
+        function getPerformanceClass(level) {
+            switch(level) {
+                case 'Excellent': return 'performance-excellent';
+                case 'Good': return 'performance-good';
+                case 'Average': return 'performance-average';
+                case 'Poor': return 'performance-poor';
+                default: return 'bg-gray-500';
+            }
+        }
+
+        // Admin dashboard functions
+        function renderAdminPerformanceTable() {
+            const tbody = document.getElementById('adminPerformanceTableBody');
+            const emptyState = document.getElementById('adminEmptyState');
+            
+            if (performanceData.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = performanceData.map(performance => {
+                const overallScore = calculateOverallScore(
+                    performance.qualityScore, 
+                    performance.productivityScore, 
+                    performance.teamworkScore
+                );
+                const performanceLevel = getPerformanceLevel(overallScore);
+                const goalsProgress = Math.round((performance.goalsCompleted / performance.totalGoals) * 100);
+                
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    ${performance.employeeName.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors" onclick="editPerformance(${performance.id})" title="Click to edit performance">${performance.employeeName}</div>
+                                    <div class="text-sm text-gray-500">${performance.department}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="font-medium">${overallScore}%</span>
+                                        <span class="text-gray-500">${performanceLevel}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="progress-bar h-2 rounded-full ${getPerformanceClass(performanceLevel)}" style="width: ${overallScore}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="font-medium">${performance.goalsCompleted}/${performance.totalGoals}</span>
+                                        <span class="text-gray-500">${goalsProgress}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="progress-bar bg-blue-500 h-2 rounded-full" style="width: ${goalsProgress}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${performance.productivityScore}%</div>
+                            <div class="text-sm text-gray-500">Productivity Rating</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${formatDate(performance.updatedAt)}
+                            <div class="text-xs text-gray-400">${performance.reviewPeriod}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <button onclick="viewPerformanceDetails(${performance.id})" class="text-blue-600 hover:text-blue-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                            </button>
+                            <button onclick="editPerformance(${performance.id})" class="text-green-600 hover:text-green-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deletePerformance(${performance.id})" class="text-red-600 hover:text-red-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateAdminDashboardStats() {
+            if (performanceData.length === 0) return;
+            
+            const totalScores = performanceData.map(p => 
+                calculateOverallScore(p.qualityScore, p.productivityScore, p.teamworkScore)
+            );
+            const avgPerformance = Math.round(totalScores.reduce((a, b) => a + b, 0) / totalScores.length);
+            
+            const topPerformers = performanceData.filter(p => 
+                calculateOverallScore(p.qualityScore, p.productivityScore, p.teamworkScore) >= 90
+            ).length;
+            
+            const needsAttention = performanceData.filter(p => 
+                calculateOverallScore(p.qualityScore, p.productivityScore, p.teamworkScore) < 70
+            ).length;
+            
+            document.getElementById('adminTotalEmployees').textContent = performanceData.length;
+            document.getElementById('adminAvgPerformance').textContent = avgPerformance + '%';
+            document.getElementById('adminTopPerformers').textContent = topPerformers;
+            document.getElementById('adminNeedsAttention').textContent = needsAttention;
+        }
+
+        function filterAndRenderAdminTable(searchTerm = '', performanceFilter = '') {
+            let filteredData = performanceData.filter(performance => {
+                const matchesSearch = performance.employeeName.toLowerCase().includes(searchTerm) ||
+                                    performance.department.toLowerCase().includes(searchTerm);
+                
+                let matchesPerformance = true;
+                if (performanceFilter) {
+                    const overallScore = calculateOverallScore(
+                        performance.qualityScore, 
+                        performance.productivityScore, 
+                        performance.teamworkScore
+                    );
+                    const level = getPerformanceLevel(overallScore);
+                    matchesPerformance = level === performanceFilter;
+                }
+                
+                return matchesSearch && matchesPerformance;
+            });
+            
+            const tbody = document.getElementById('adminPerformanceTableBody');
+            const emptyState = document.getElementById('adminEmptyState');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = filteredData.map(performance => {
+                const overallScore = calculateOverallScore(
+                    performance.qualityScore, 
+                    performance.productivityScore, 
+                    performance.teamworkScore
+                );
+                const performanceLevel = getPerformanceLevel(overallScore);
+                const goalsProgress = Math.round((performance.goalsCompleted / performance.totalGoals) * 100);
+                
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    ${performance.employeeName.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors" onclick="editPerformance(${performance.id})" title="Click to edit performance">${performance.employeeName}</div>
+                                    <div class="text-sm text-gray-500">${performance.department}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="font-medium">${overallScore}%</span>
+                                        <span class="text-gray-500">${performanceLevel}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="progress-bar h-2 rounded-full ${getPerformanceClass(performanceLevel)}" style="width: ${overallScore}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="font-medium">${performance.goalsCompleted}/${performance.totalGoals}</span>
+                                        <span class="text-gray-500">${goalsProgress}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="progress-bar bg-blue-500 h-2 rounded-full" style="width: ${goalsProgress}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${performance.productivityScore}%</div>
+                            <div class="text-sm text-gray-500">Productivity Rating</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${formatDate(performance.updatedAt)}
+                            <div class="text-xs text-gray-400">${performance.reviewPeriod}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <button onclick="viewPerformanceDetails(${performance.id})" class="text-blue-600 hover:text-blue-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                            </button>
+                            <button onclick="editPerformance(${performance.id})" class="text-green-600 hover:text-green-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deletePerformance(${performance.id})" class="text-red-600 hover:text-red-900 transition-colors">
+                                <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Employee dashboard functions
+        function renderEmployeeDashboard() {
+            const user = userDB.getUser(currentUser);
+            const employeePerformance = performanceData.find(p => 
+                p.employeeName.toLowerCase() === user.name.toLowerCase()
+            );
+            
+            if (!employeePerformance) {
+                // No performance data for this employee
+                document.getElementById('employeeOverallScore').textContent = 'N/A';
+                document.getElementById('employeePerformanceLevel').textContent = 'No data available';
+                document.getElementById('employeeGoalsProgress').textContent = '0/0';
+                document.getElementById('employeeGoalsPercentage').textContent = '0% completed';
+                document.getElementById('employeeLastReview').textContent = 'No reviews';
+                document.getElementById('employeeReviewPeriod').textContent = 'N/A';
+                
+                document.getElementById('employeePerformanceBreakdown').innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>No performance data available yet.</p>
+                        <p class="text-sm mt-2">Contact your manager for performance reviews.</p>
+                    </div>
+                `;
+                
+                document.getElementById('employeePerformanceHistory').innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>No performance history available.</p>
+                    </div>
+                `;
+                
+                document.getElementById('employeePerformanceNotes').innerHTML = `
+                    <div class="text-gray-500 italic">No performance notes available.</div>
+                `;
+                
+                return;
+            }
+            
+            const overallScore = calculateOverallScore(
+                employeePerformance.qualityScore,
+                employeePerformance.productivityScore,
+                employeePerformance.teamworkScore
+            );
+            const performanceLevel = getPerformanceLevel(overallScore);
+            const goalsProgress = Math.round((employeePerformance.goalsCompleted / employeePerformance.totalGoals) * 100);
+            
+            // Update overview cards
+            document.getElementById('employeeOverallScore').textContent = overallScore + '%';
+            document.getElementById('employeePerformanceLevel').textContent = performanceLevel;
+            document.getElementById('employeeGoalsProgress').textContent = `${employeePerformance.goalsCompleted}/${employeePerformance.totalGoals}`;
+            document.getElementById('employeeGoalsPercentage').textContent = `${goalsProgress}% completed`;
+            document.getElementById('employeeLastReview').textContent = formatDate(employeePerformance.updatedAt);
+            document.getElementById('employeeReviewPeriod').textContent = employeePerformance.reviewPeriod;
+            
+            // Performance breakdown
+            document.getElementById('employeePerformanceBreakdown').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-blue-900">Quality Score</h4>
+                            <p class="text-sm text-blue-700">Work quality and accuracy</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-blue-600">${employeePerformance.qualityScore}%</div>
+                            <div class="w-24 bg-blue-200 rounded-full h-2 mt-1">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${employeePerformance.qualityScore}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-green-900">Productivity Score</h4>
+                            <p class="text-sm text-green-700">Efficiency and output</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-green-600">${employeePerformance.productivityScore}%</div>
+                            <div class="w-24 bg-green-200 rounded-full h-2 mt-1">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: ${employeePerformance.productivityScore}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-purple-900">Teamwork Score</h4>
+                            <p class="text-sm text-purple-700">Collaboration and communication</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-purple-600">${employeePerformance.teamworkScore}%</div>
+                            <div class="w-24 bg-purple-200 rounded-full h-2 mt-1">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: ${employeePerformance.teamworkScore}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Performance history (showing current review)
+            document.getElementById('employeePerformanceHistory').innerHTML = `
+                <div class="border-l-4 border-blue-500 pl-4 py-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-medium text-gray-900">${employeePerformance.reviewPeriod} Review</h4>
+                            <p class="text-sm text-gray-600">${formatDate(employeePerformance.updatedAt)}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-blue-600">${overallScore}%</div>
+                            <div class="text-sm text-gray-500">${performanceLevel}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-sm text-gray-700">
+                            Goals: ${employeePerformance.goalsCompleted}/${employeePerformance.totalGoals} completed (${goalsProgress}%)
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center py-4 text-gray-500 text-sm">
+                    <p>Historical performance data will appear here as more reviews are added.</p>
+                </div>
+            `;
+            
+            // Performance notes
+            document.getElementById('employeePerformanceNotes').innerHTML = `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-gray-700">${employeePerformance.performanceNotes || 'No performance notes available.'}</p>
+                    <div class="mt-3 text-sm text-gray-500">
+                        <p><strong>Review Period:</strong> ${employeePerformance.reviewPeriod}</p>
+                        <p><strong>Last Updated:</strong> ${formatDate(employeePerformance.updatedAt)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const text = document.getElementById('notificationText');
+            
+            text.textContent = message;
+            notification.className = `notification ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-6 py-3 rounded-lg shadow-lg show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Modal functions (Admin only)
+        function openPerformanceModal(performance = null) {
+            if (userRole !== 'admin') return;
+            
+            const modal = document.getElementById('performanceModal');
+            const form = document.getElementById('performanceForm');
+            const title = document.getElementById('modalTitle');
+            const submitButton = document.getElementById('submitButtonText');
+            
+            if (performance) {
+                editingId = performance.id;
+                title.textContent = 'Edit Performance Review';
+                submitButton.textContent = 'Update Performance Review';
+                
+                document.getElementById('employeeName').value = performance.employeeName;
+                document.getElementById('department').value = performance.department;
+                document.getElementById('qualityScore').value = performance.qualityScore;
+                document.getElementById('productivityScore').value = performance.productivityScore;
+                document.getElementById('teamworkScore').value = performance.teamworkScore;
+                document.getElementById('goalsCompleted').value = performance.goalsCompleted;
+                document.getElementById('totalGoals').value = performance.totalGoals;
+                document.getElementById('performanceNotes').value = performance.performanceNotes;
+                document.getElementById('reviewPeriod').value = performance.reviewPeriod;
+            } else {
+                editingId = null;
+                title.textContent = 'Add Performance Review';
+                submitButton.textContent = 'Save Performance Review';
+                form.reset();
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('performanceModal').classList.add('hidden');
+            document.getElementById('performanceForm').reset();
+            editingId = null;
+        }
+
+        function editPerformance(id) {
+            if (userRole !== 'admin') return;
+            
+            const performance = performanceData.find(p => p.id === id);
+            if (performance) {
+                openPerformanceModal(performance);
+            }
+        }
+
+        function deletePerformance(id) {
+            if (userRole !== 'admin') return;
+            
+            const performance = performanceData.find(p => p.id === id);
+            if (!performance) return;
+            
+            if (confirm('Are you sure you want to delete this performance review?')) {
+                if (db.delete(id)) {
+                    // Send notification to employee about deletion
+                    notificationDB.addNotification(
+                        performance.employeeName,
+                        '🗑️ Performance Review Removed',
+                        `Your ${performance.reviewPeriod} performance review has been removed by your administrator.`,
+                        'warning'
+                    );
+                    
+                    performanceData = db.select();
+                    renderAdminPerformanceTable();
+                    updateAdminDashboardStats();
+                    showNotification('Performance review deleted successfully', 'success');
+                } else {
+                    showNotification('Failed to delete performance review', 'error');
+                }
+            }
+        }
+
+        function viewPerformanceDetails(id) {
+            const performance = performanceData.find(p => p.id === id);
+            if (!performance) return;
+            
+            const overallScore = calculateOverallScore(
+                performance.qualityScore, 
+                performance.productivityScore, 
+                performance.teamworkScore
+            );
+            const performanceLevel = getPerformanceLevel(overallScore);
+            const goalsProgress = Math.round((performance.goalsCompleted / performance.totalGoals) * 100);
+            
+            const detailsContent = `
+                <div class="space-y-6">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">${performance.employeeName} - Performance Overview</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Department</p>
+                                <p class="font-medium">${performance.department}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Review Period</p>
+                                <p class="font-medium">${performance.reviewPeriod}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Overall Performance</p>
+                                <p class="font-medium text-lg">${overallScore}% - ${performanceLevel}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Goals Progress</p>
+                                <p class="font-medium">${performance.goalsCompleted}/${performance.totalGoals} (${goalsProgress}%)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h5 class="font-medium text-blue-900 mb-2">Quality Score</h5>
+                            <div class="text-2xl font-bold text-blue-600">${performance.qualityScore}%</div>
+                            <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${performance.qualityScore}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <h5 class="font-medium text-green-900 mb-2">Productivity Score</h5>
+                            <div class="text-2xl font-bold text-green-600">${performance.productivityScore}%</div>
+                            <div class="w-full bg-green-200 rounded-full h-2 mt-2">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: ${performance.productivityScore}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h5 class="font-medium text-purple-900 mb-2">Teamwork Score</h5>
+                            <div class="text-2xl font-bold text-purple-600">${performance.teamworkScore}%</div>
+                            <div class="w-full bg-purple-200 rounded-full h-2 mt-2">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: ${performance.teamworkScore}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white border rounded-lg p-4">
+                        <h5 class="font-medium text-gray-900 mb-2">Performance Notes</h5>
+                        <p class="text-gray-700">${performance.performanceNotes || 'No notes available.'}</p>
+                    </div>
+                    
+                    <div class="text-sm text-gray-500">
+                        <p>Last updated: ${formatDate(performance.updatedAt)}</p>
+                        <p>Created: ${formatDate(performance.createdAt)}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('detailsContent').innerHTML = detailsContent;
+            document.getElementById('detailsModal').classList.remove('hidden');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        // Form submission (Admin only)
+        document.getElementById('performanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (userRole !== 'admin') return;
+            
+            const formData = {
+                employeeName: document.getElementById('employeeName').value,
+                department: document.getElementById('department').value,
+                qualityScore: parseInt(document.getElementById('qualityScore').value),
+                productivityScore: parseInt(document.getElementById('productivityScore').value),
+                teamworkScore: parseInt(document.getElementById('teamworkScore').value),
+                goalsCompleted: parseInt(document.getElementById('goalsCompleted').value),
+                totalGoals: parseInt(document.getElementById('totalGoals').value),
+                performanceNotes: document.getElementById('performanceNotes').value,
+                reviewPeriod: document.getElementById('reviewPeriod').value
+            };
+            
+            if (editingId) {
+                const oldPerformance = performanceData.find(p => p.id === editingId);
+                const updated = db.update(editingId, formData);
+                if (updated) {
+                    performanceData = db.select();
+                    renderAdminPerformanceTable();
+                    updateAdminDashboardStats();
+                    
+                    // Send notification to employee about update
+                    if (oldPerformance) {
+                        const oldScore = calculateOverallScore(oldPerformance.qualityScore, oldPerformance.productivityScore, oldPerformance.teamworkScore);
+                        const newScore = calculateOverallScore(formData.qualityScore, formData.productivityScore, formData.teamworkScore);
+                        
+                        let notificationType = 'info';
+                        let message = `Your ${formData.reviewPeriod} performance review has been updated. Overall score: ${newScore}%.`;
+                        
+                        if (newScore > oldScore) {
+                            notificationType = 'success';
+                            message = `Your ${formData.reviewPeriod} performance review has been updated. Your score improved by ${newScore - oldScore}% (now ${newScore}%).`;
+                        } else if (newScore < oldScore) {
+                            notificationType = 'warning';
+                            message = `Your ${formData.reviewPeriod} performance review has been updated. Your score decreased by ${oldScore - newScore}% (now ${newScore}%).`;
+                        }
+                        
+                        notificationDB.addNotification(
+                            formData.employeeName,
+                            '📈 Performance Review Updated',
+                            message,
+                            notificationType
+                        );
+                    }
+                    
+                    showNotification('Performance review updated successfully', 'success');
+                } else {
+                    showNotification('Failed to update performance review', 'error');
+                }
+            } else {
+                const newPerformance = db.insert(formData);
+                if (newPerformance) {
+                    performanceData = db.select();
+                    renderAdminPerformanceTable();
+                    updateAdminDashboardStats();
+                    
+                    // Send notification to employee about new review
+                    const overallScore = calculateOverallScore(formData.qualityScore, formData.productivityScore, formData.teamworkScore);
+                    notificationDB.addNotification(
+                        formData.employeeName,
+                        '📊 New Performance Review Added',
+                        `Your ${formData.reviewPeriod} performance review has been created. Overall score: ${overallScore}%. Check your dashboard for details.`,
+                        'success'
+                    );
+                    
+                    showNotification('Performance review added successfully', 'success');
+                } else {
+                    showNotification('Failed to add performance review', 'error');
+                }
+            }
+            
+            closeModal();
+        });
+
+        // Password Reset Functions
+        function openPasswordResetModal() {
+            document.getElementById('passwordResetModal').classList.remove('hidden');
+            document.getElementById('resetStep1').classList.remove('hidden');
+            document.getElementById('resetStep2').classList.add('hidden');
+            document.getElementById('resetUsername').value = '';
+        }
+
+        function closePasswordResetModal() {
+            document.getElementById('passwordResetModal').classList.add('hidden');
+            document.getElementById('resetStep1').classList.remove('hidden');
+            document.getElementById('resetStep2').classList.add('hidden');
+            document.getElementById('resetUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        }
+
+        function initiatePasswordReset() {
+            const username = document.getElementById('resetUsername').value.trim();
+            
+            if (!username) {
+                showNotification('Please enter a username', 'error');
+                return;
+            }
+
+            const user = userDB.getUser(username);
+            if (!user) {
+                showNotification('Username not found. Please check and try again.', 'error');
+                return;
+            }
+
+            // Show account found and proceed to step 2
+            document.getElementById('foundAccountInfo').textContent = `User: ${username} (${user.name})`;
+            document.getElementById('resetStep1').classList.add('hidden');
+            document.getElementById('resetStep2').classList.remove('hidden');
+        }
+
+        function backToStep1() {
+            document.getElementById('resetStep1').classList.remove('hidden');
+            document.getElementById('resetStep2').classList.add('hidden');
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        }
+
+        function resetPassword() {
+            const username = document.getElementById('resetUsername').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+            // Validation
+            if (!newPassword || !confirmPassword) {
+                showNotification('Please fill in all password fields', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showNotification('Password must be at least 6 characters long', 'error');
+                return;
+            }
+
+            // Update password in database
+            const users = userDB.load();
+            if (users[username]) {
+                users[username].password = newPassword;
+                
+                if (userDB.save(users)) {
+                    showNotification('Password reset successfully! You can now log in with your new password.', 'success');
+                    closePasswordResetModal();
+                } else {
+                    showNotification('Failed to reset password. Please try again.', 'error');
+                }
+            } else {
+                showNotification('User not found', 'error');
+            }
+        }
+
+        // Initialize the application
+        initializeData();
+        
+        // Check for existing session on page load
+        if (!checkSession()) {
+            // Show login screen if no valid session
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97e8af80c2bc02c2',t:'MTc1Nzc3NzQyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
